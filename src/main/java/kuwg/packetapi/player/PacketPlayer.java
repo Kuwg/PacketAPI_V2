@@ -2,17 +2,14 @@ package kuwg.packetapi.player;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import io.netty.buffer.UnpooledHeapByteBuf;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFutureListener;
 import kuwg.packetapi.PacketAPI;
 import kuwg.packetapi.mojang.BoundingBox;
 import kuwg.packetapi.mojang.GameProfile;
-import kuwg.packetapi.mojang.PlayerTeleportFlag;
+import kuwg.packetapi.packets.play.in.WrappedPlayInKeepAlive;
 import kuwg.packetapi.util.ByteBufUtil;
-import kuwg.packetapi.util.ChannelGetter;
 import kuwg.packetapi.util.ReflectionUtil;
-import kuwg.packetapi.util.StringUtil;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
@@ -35,7 +32,7 @@ import java.lang.reflect.Method;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
-//@SuppressWarnings({"unused", "JavaReflectionInvocation", "unchecked", "rawtypes"})
+@SuppressWarnings({"unused", "JavaReflectionInvocation", "unchecked", "rawtypes", "CallToPrintStackTrace"})
 public class PacketPlayer {
     private final Player player;
     private final Channel channel;
@@ -44,18 +41,43 @@ public class PacketPlayer {
     private final Object playerConnection;
     private final Object networkManager;
     private final long joinTime;
-    private static final String ver = ChannelGetter.getServerVersion();
+    /**
+     * The server version, as V1_x_x_<sub> ^</sub>
+     */
+    public static final String SERVER_VERSION = ReflectionUtil.v;
+    private int ping;
+
     private String getServerVersion(){
-        return ver;
+        return SERVER_VERSION;
     }
+
+
+
     public static final Set<Object> teleportFlags;
 
+    private static final Class<?> craftPlayerClass = Objects.requireNonNull(
+            ReflectionUtil.classForName("org.bukkit.craftbukkit."+SERVER_VERSION+".entity.CraftPlayer")
+    );
+    private static final Method getHandleMethod = ReflectionUtil.getMethod(craftPlayerClass, "getHandle");
+    private static final Class<?> entityPlayerClass = Objects.requireNonNull(
+            ReflectionUtil.classForName("net.minecraft.server."+SERVER_VERSION+".EntityPlayer"));
+    final private static Field playerConnectionField;
+    private static final Class<?> playerConnectionClass = Objects.requireNonNull(
+            ReflectionUtil.classForName("net.minecraft.server."+SERVER_VERSION+".PlayerConnection")
+    );
+    private static final Field networkManagerField ;
+    private static final Class<?> networkManagerClass = Objects.requireNonNull(
+            ReflectionUtil.classForName("net.minecraft.server."+SERVER_VERSION+".NetworkManager")
+    );
+    private static final Class<?> Vec3D =
+            ReflectionUtil.classForName("net.minecraft.server." + SERVER_VERSION + ".Vec3D");
+    private final static Field channelField;
     static {
         Set<Object> teleportFlags1 = new HashSet<>();
         try {
             Class<?> enumTeleportFlagsClass=null;
 
-            for(Class<?> clazz : Class.forName("net.minecraft.server." + ver + ".PacketPlayOutPosition").getDeclaredClasses())
+            for(Class<?> clazz : Class.forName("net.minecraft.server." + SERVER_VERSION + ".PacketPlayOutPosition").getDeclaredClasses())
                 if(clazz.getSimpleName().contains("Flags"))
                     enumTeleportFlagsClass=clazz;
             if(enumTeleportFlagsClass==null)
@@ -65,49 +87,54 @@ public class PacketPlayer {
             teleportFlags1.addAll(Arrays.asList((Object[]) valuesMet.invoke(null)));
         } catch (ClassNotFoundException | IllegalAccessException | NoSuchMethodException |
                  InvocationTargetException e) {
-            e.printStackTrace();
+            e.printStackTrace(System.out);
         }
-
         teleportFlags = teleportFlags1;
-    }
-
-    public PacketPlayer(Player player) {
-        this.joinTime = System.currentTimeMillis();
-        this.player = player;
-        this.craftPlayer = Objects.requireNonNull(ReflectionUtil.classForName("org.bukkit.craftbukkit." + getServerVersion() + ".entity.CraftPlayer")).cast(player);
-        this.entityPlayer = ReflectionUtil.getInvokeResult(ReflectionUtil.getMethod(ReflectionUtil.classForName("org.bukkit.craftbukkit." + getServerVersion() + ".entity.CraftPlayer"), "getHandle"), player);
-        assert entityPlayer != null : "Null Entity Player";
-        Class<?> entityPlayerClass = entityPlayer.getClass();
-        Field playerConnectionField = ReflectionUtil.getDeclaredField(entityPlayerClass, "playerConnection");
-        if (playerConnectionField == null) {
+        Field temp;
+        temp = ReflectionUtil.getDeclaredField(entityPlayerClass, "playerConnection");
+        if (temp == null) {
             for (final Field field : ReflectionUtil.getFields(entityPlayerClass)) {
                 assert field != null;
                 if (field.getType().getSimpleName().equalsIgnoreCase("PlayerConnection")) {
-                    playerConnectionField = field;
+                    temp = field;
                 }
             }
         }
-        assert playerConnectionField != null : "Null player connection.";
-        playerConnectionField.setAccessible(true);
-        this.playerConnection = ReflectionUtil.getFieldInvocationResult(playerConnectionField, entityPlayer);
-        if (playerConnection == null) {
-            player.kickPlayer("Kicked for null connection.");
-            throw new NullPointerException("PlayerConnection is null");
-        }
-        Class<?> playerConnectionClass = playerConnection.getClass();
-        Field networkManagerField = ReflectionUtil.getDeclaredField(playerConnectionClass, "networkManager");
-        if (networkManagerField == null) for (Field field : ReflectionUtil.getFields(playerConnectionClass)) {
+        Objects.requireNonNull(temp).setAccessible(true);
+        playerConnectionField=temp;
+
+        Field temp2 = ReflectionUtil.getDeclaredField(playerConnectionClass, "networkManager");
+        if (temp2 == null) for (Field field : ReflectionUtil.getFields(playerConnectionClass)) {
             assert field != null;
-            if (field.getType().getSimpleName().contains("NetworkManager")) networkManagerField = field;
+            if (field.getType().getSimpleName().contains("NetworkManager")) temp2 = field;
         }
-        assert networkManagerField != null : "Network Manager Null";
-        networkManagerField.setAccessible(true);
+        Objects.requireNonNull(temp2).setAccessible(true);
+        networkManagerField=temp2;
+
+        Field temp3 = ReflectionUtil.getDeclaredField(networkManagerClass, "channel");
+        if(temp3==null){
+            for(Field field : ReflectionUtil.getFields(networkManagerClass)){
+                if (field != null && field.getType().getSimpleName().equalsIgnoreCase("Channel")) {
+                    temp3 = field;
+                }
+            }
+        }
+        channelField=temp3;
+    }
+
+
+    /**
+     * Default constructor
+     * @param player>org.bukkit.entity player!
+     */
+    public PacketPlayer(@NotNull Player player) {
+        this.joinTime = System.currentTimeMillis();
+        this.player = player;
+        this.craftPlayer = craftPlayerClass.cast(player);
+        this.entityPlayer = ReflectionUtil.getInvokeResult(getHandleMethod, player);
+        this.playerConnection = ReflectionUtil.getFieldInvocationResult(playerConnectionField, entityPlayer);
         this.networkManager = ReflectionUtil.getFieldInvocationResult(networkManagerField, playerConnection);
-        if (networkManager == null) {
-            player.kickPlayer("Kicked for null network manager.");
-            throw new NullPointerException("NetworkManager is null");
-        }
-        this.channel = ChannelGetter.getFastChannel(networkManager);
+        this.channel = (Channel) ReflectionUtil.getFieldInvocationResult(channelField, networkManager);
     }
 
     public Player getPlayer() {
@@ -131,7 +158,7 @@ public class PacketPlayer {
      * @param packetName The packet name that will get sent
      * @param params the parameters to the class for name packetName.
      */
-    public boolean sendPacket(String packetName, Object... params){
+    public boolean sendNMSPacket(String packetName, Object... params){
         try{
             Object packet = ReflectionUtil.startClassConst(Class.forName(packetName), params);
             Class<?> packetClass = Class.forName("net.minecraft.server." + getServerVersion() + ".Packet");
@@ -170,9 +197,11 @@ public class PacketPlayer {
      *
      * @param packet The packet to be sent
      */
-    public void sendPacket(Object packet){
-        Class<?> Packet = ReflectionUtil.classForName("net.minecraft.server." + getServerVersion() + ".Packet");
-        ReflectionUtil.getInvokeResult(ReflectionUtil.getMethod(getPlayerConnection().getClass(), "sendPacket", Packet), getPlayerConnection(), packet);
+    public void sendNMSPacket(Object packet){
+        ReflectionUtil.getInvokeResult(
+                ReflectionUtil.getMethod(getPlayerConnection().getClass(), "sendPacket",
+                        ReflectionUtil.classForName("net.minecraft.server." + getServerVersion() + ".Packet")),
+                getPlayerConnection(), packet);
     }
     /*
     public void sendPacket(PacketWrapper packet){
@@ -182,15 +211,16 @@ public class PacketPlayer {
     }
     fix!
      */
-
+    public void sendPacket(ByteBuf byteBuf){
+        channel.writeAndFlush(byteBuf);
+    }
     public void setSkin(Player onlinePlayer) {
         try {
             Class<?> craftPlayerClass = Class.forName("org.bukkit.craftbukkit." + getServerVersion() + ".entity.CraftPlayer");
             Class<?> gameProfileClass = Class.forName("com.mojang.authlib.GameProfile");
             Class<?> propertyMapClass = Class.forName("com.mojang.authlib.properties.PropertyMap");
-            Method getHandleMethod = craftPlayerClass.getMethod("getHandle");
             Object playerHandle = entityPlayer;
-            Object skinOwnerHandle = getHandleMethod.invoke(craftPlayerClass.cast(onlinePlayer));
+            Object skinOwnerHandle = craftPlayerClass.getMethod("getHandle").invoke(craftPlayerClass.cast(onlinePlayer));
             Object playerProfile = gameProfileClass.cast(playerHandle.getClass().getMethod("getProfile").invoke(playerHandle));
             Object skinOwnerProfile = gameProfileClass.cast(skinOwnerHandle.getClass().getMethod("getProfile").invoke(skinOwnerHandle));
             Object playerProperties = propertyMapClass.cast(playerProfile.getClass().getMethod("getProperties").invoke(playerProfile));
@@ -207,8 +237,8 @@ public class PacketPlayer {
     }
     public void crash(){
         try {
-            Class<?> Vec3D = Class.forName("net.minecraft.server." + getServerVersion() + ".Vec3D");
-            sendPacket(
+            final Class<?> Vec3D = Class.forName("net.minecraft.server." + getServerVersion() + ".Vec3D");
+            sendNMSPacket(
                     Class.forName("net.minecraft.server." + getServerVersion() + ".PacketPlayOutExplosion")
                             .getConstructor(double.class, double.class, double.class, float.class, List.class, Vec3D)
                             .newInstance(
@@ -221,11 +251,9 @@ public class PacketPlayer {
                             )
             );
 
-        }catch (Exception ex){
-            ex.printStackTrace();
+        }catch (Exception ex) {
+            ex.printStackTrace(System.out);
         }
-
-
     }
     private static Double d() {
         return Double.MAX_VALUE-432.432;
@@ -289,26 +317,16 @@ public class PacketPlayer {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            e.printStackTrace(System.out);
         }
     }
-    /*
-    FIX
-
-    public void sendPosition(double x, double y, double z, float yaw, float pitch){
-        final PacketWrapper packet = PacketHelper.getOutPosition(player,x,y,z,yaw,pitch);
-        if(packet!=null) {
-            this.sendPacket(packet);
-        }
-    }
-    */
 
     public void sendAs(String message){
         try{
             playerConnection.getClass().getMethod("chat", String.class, Boolean.class)
                     .invoke(playerConnection, ChatColor.translateAlternateColorCodes('&', message), false);
         }catch (InvocationTargetException | IllegalAccessException | NoSuchMethodException e) {
-            e.printStackTrace();
+            e.printStackTrace(System.out);
         }
     }
 
@@ -328,12 +346,13 @@ public class PacketPlayer {
             Constructor<?> packetConstructor = packetClass.getConstructor(enumPlayerInfoActionClass,
                     entityPlayer.getClass());
             Enum<?> enumPlayerInfoAction = Enum.valueOf((Class<? extends Enum>) enumPlayerInfoActionClass, "REMOVE_PLAYER");
-            sendPacket(packetConstructor.newInstance(enumPlayerInfoAction, entityPlayer));
+            sendNMSPacket(packetConstructor.newInstance(enumPlayerInfoAction, entityPlayer));
         } catch (Exception e) {
-            e.printStackTrace();
+            e.printStackTrace(System.out);
         }
     }
 
+    @SuppressWarnings({"unchecked", "rawtypes"})
     public void showPlayer() {
         try {
             Class<?> packetClass = Class.forName("net.minecraft.server." + getServerVersion() +
@@ -343,18 +362,19 @@ public class PacketPlayer {
             Constructor<?> packetConstructor = packetClass.getConstructor(enumPlayerInfoActionClass,
                     entityPlayer.getClass());
             Enum<?> enumPlayerInfoAction = Enum.valueOf((Class<Enum>) enumPlayerInfoActionClass, "ADD_PLAYER");
-            sendPacket(packetConstructor.newInstance(enumPlayerInfoAction, entityPlayer));
+            sendNMSPacket(packetConstructor.newInstance(enumPlayerInfoAction, entityPlayer));
         } catch (Exception e) {
-            e.printStackTrace();
+            e.printStackTrace(System.out);
         }
     }
     public GameProfile getProfile() {
         final Object nmsProfile = ReflectionUtil.getInvokeResult(
                 ReflectionUtil.getMethod(craftPlayer.getClass(), "getProfile"), craftPlayer
         );
-        return new GameProfile((UUID) ReflectionUtil.getTField(
+        assert nmsProfile != null;
+        return new GameProfile( ReflectionUtil.getTField(
                 nmsProfile, "id"),
-                (String) ReflectionUtil.getTField(nmsProfile, "name")
+                ReflectionUtil.getTField(nmsProfile, "name")
         );
     }
     public void setProfile(final GameProfile profile){
@@ -367,9 +387,10 @@ public class PacketPlayer {
             assert gpf!=null:"Game Profile Field doesn't exist!";
             gpf.set(entityPlayer, newGameProfile);
         }catch (Exception e){
-            e.printStackTrace();
+            e.printStackTrace(System.out);
         }
     }
+
     @Deprecated
     public void attack(Entity victim){
         //FIXME: player.attack(victim);
@@ -377,15 +398,6 @@ public class PacketPlayer {
 
     public void sendMessage(String message, kuwg.packetapi.mojang.ChatMessageType type) {
         try {
-            /*
-            OLD CODE:
-            playerConnection.getClass().getMethod("sendPacket",
-                    Class.forName("net.minecraft.server."+ver+".Packet")).invoke(playerConnection, Class.forName("net.minecraft.server."+ver+".PacketPlayOutChat")
-                    .getConstructor(Class.forName("net.minecraft.server."+ver+".IChatBaseComponent"), byte.class)
-                    .newInstance(Class.forName("net.minecraft.server."+ver+".ChatComponentText")
-                            .getConstructor(String.class).newInstance(message), (byte) 1));
-
-             */
             message="{\"text\": \"" + message + "\"}";
             ByteBuf byteBuf = Unpooled.buffer(message.getBytes().length);
             ByteBufUtil.writeVarInt(byteBuf, 0x02);
@@ -393,7 +405,7 @@ public class PacketPlayer {
             byteBuf.writeByte(type==kuwg.packetapi.mojang.ChatMessageType.CHAT?0x0:(type==kuwg.packetapi.mojang.ChatMessageType.ACTION_BAR?0x2:0x1));
             channel.writeAndFlush(byteBuf);
         } catch (Exception e) {
-            e.printStackTrace();
+            e.printStackTrace(System.out);
         }
     }
 
@@ -431,10 +443,9 @@ public class PacketPlayer {
         return g;
     }
     public int getAmplifier(PotionEffectType effectType) {
-        for(PotionEffect effect:player.getActivePotionEffects())if(effect.getType()==effectType)return effect.getAmplifier();
-        return 0;
+        return player.getActivePotionEffects().stream().filter(effect -> effect.getType() == effectType).findFirst().map(PotionEffect::getAmplifier).orElse(0);
     }
-    public  void randomRotation() {
+    public void randomRotation() {
         Bukkit.getScheduler().runTask(PacketAPI.getInstance(),()->player.teleport(new Location(player.getWorld(), player.getLocation().getX(), player.getLocation().getY(), player.getLocation().getZ(), (float) (ThreadLocalRandom.current().nextDouble(360.0) - 180.0f), (float) (ThreadLocalRandom.current().nextDouble(180.0) - 90.0f)), PlayerTeleportEvent.TeleportCause.UNKNOWN));
     }
     public void teleport(Location location){
@@ -446,11 +457,14 @@ public class PacketPlayer {
         if (Float.isNaN(f1))
             f1 = 0.0F;
         try {
-            Class<?> packetClass = Class.forName("net.minecraft.server." + getServerVersion() + ".PacketPlayOutPosition");
-            Constructor<?> packetConstructor = packetClass.getConstructor(double.class, double.class, double.class, float.class, float.class, Set.class);
-            this.sendPacket(packetConstructor.newInstance(d0, d1, d2, f, f1, teleportFlags));
+            this.sendNMSPacket(
+                    Class.forName("net.minecraft.server." + getServerVersion() + ".PacketPlayOutPosition")
+                            .getConstructor(
+                                    double.class, double.class, double.class, float.class, float.class, Set.class)
+                            .newInstance(d0, d1, d2, f, f1, teleportFlags));
         } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException | InstantiationException | InvocationTargetException ignored) {}
     }
+
     @SuppressWarnings("ConstantConditions")
     public int getPing() {
         return ReflectionUtil.getTField(entityPlayer, "ping");
@@ -470,4 +484,44 @@ public class PacketPlayer {
         channel.writeAndFlush(byteBuf).addListener(ChannelFutureListener.CLOSE);
     }
 
+    private int sentID;
+    private long sentTime;
+    public void onKeepAlive(WrappedPlayInKeepAlive keepAlive){
+        if(keepAlive.getID()==sentID) {
+            final long now = System.currentTimeMillis();
+            ping = (int) (now-sentTime);
+        }
+    }
+
+    /**
+     *
+     */
+    public void sendKeepAlivePacket(final int id){
+        ByteBuf buffer = Unpooled.buffer();
+        ByteBufUtil.writeVarInt(buffer, 0x00);
+        ByteBufUtil.writeVarInt(buffer, id);
+        this.sendPacket(buffer);
+        this.sentTime=System.currentTimeMillis();
+        this.sentID=id;
+    }
+
+
+    /**
+     * Be aware that this updates every 1.5 seconds.
+     * @return The delay between send-receive keep alive packets.
+     */
+    public int getKeepAlivePing(){
+        return ping;
+    }
+
+
+    /**
+     * This can be easily faked by the client just by waiting for sending the packet back.
+     * Keep Alive Ping is far more precise.
+     * @return Player's ping based on CraftBukkit API
+     */
+    @SuppressWarnings("DataFlowIssue")
+    public int reflectionPing(){
+        return ReflectionUtil.getTField(entityPlayer, "ping");
+    }
 }

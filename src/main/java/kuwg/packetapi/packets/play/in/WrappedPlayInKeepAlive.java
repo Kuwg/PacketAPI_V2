@@ -11,9 +11,11 @@ import org.bukkit.entity.Player;
 public class WrappedPlayInKeepAlive extends PacketWrapper<WrappedPlayInKeepAlive> {
     public WrappedPlayInKeepAlive(ByteBuf buffer, Player sender) {
         super(buffer, sender, EnumPacketDirection.SEND);
+        read();
     }
     public WrappedPlayInKeepAlive(PacketReceiveEvent event){
         super(event.getByteBuf(), event.getPlayer(), EnumPacketDirection.SEND);
+        read();
     }
 
     private long id;

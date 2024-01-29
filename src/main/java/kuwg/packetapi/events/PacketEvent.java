@@ -2,9 +2,9 @@ package kuwg.packetapi.events;
 
 import io.netty.buffer.ByteBuf;
 import kuwg.packetapi.PacketAPI;
+import kuwg.packetapi.exceptions.PacketBufferException;
+import kuwg.packetapi.exceptions.PacketException;
 import kuwg.packetapi.exceptions.PacketProcessException;
-import kuwg.packetapi.ids.EnumPacketType;
-import kuwg.packetapi.ids.PacketType;
 import kuwg.packetapi.packets.EnumPacketDirection;
 import kuwg.packetapi.player.PacketPlayer;
 import kuwg.packetapi.util.ByteBufUtil;
@@ -22,25 +22,22 @@ public abstract class PacketEvent implements Cancellable {
     protected int packetID;
     private final EnumPacketDirection direction;
     private final PacketPlayer packetPlayer;
-    protected PacketEvent(ByteBuf buffer, Player player, EnumPacketDirection direction) throws PacketProcessException{
+    protected PacketEvent(ByteBuf buffer, Player player, EnumPacketDirection direction) throws PacketException {
         try {
             this.byteBuf = buffer;
             this.size = byteBuf.readableBytes();
             if (size == 0)
-                throw new PacketProcessException("Size of packet is 0.");
+                throw new PacketBufferException("Size of packet is 0.");
             timestamp = System.currentTimeMillis();
             this.player = player;
             this.direction = direction;
             this.packetPlayer = PacketAPI.getInstance().getPacketPlayer(player);
             this.packetID = ByteBufUtil.readVarInt(byteBuf);
         }catch (Exception ex){
-            throw new PacketProcessException(ex.getMessage());
+            throw new PacketBufferException(ex.getMessage());
         }
     }
-    @Nullable
-    public EnumPacketType getPacketType(){
-        return (EnumPacketType) (direction==EnumPacketDirection.SEND? Objects.requireNonNull(PacketType.thisVersionPacketType()).getSendPacketFrom(packetID) : Objects.requireNonNull(PacketType.thisVersionPacketType()).getReceivePacketFrom(packetID));
-    }
+
     public final Player getPlayer() {
         return player;
     }

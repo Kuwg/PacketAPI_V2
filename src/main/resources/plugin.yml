@@ -3,3 +3,5 @@ version: '${project.version}'
 main: kuwg.packetapi.PacketAPI
 api-version: '1.13'
 load: STARTUP
+commands:
+  test:

@@ -85,7 +85,7 @@ public class PAPIVer {
      * Like 1.8=1.8 so true.
      *
      * @param ver Compared version.
-     * @return
+     * @return if equals
      */
     public boolean isNewerOrEquals(String ver){
         final PAPIVer version = new PAPIVer(ver);

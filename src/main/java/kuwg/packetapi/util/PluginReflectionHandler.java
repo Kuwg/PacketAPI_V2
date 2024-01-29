@@ -6,8 +6,6 @@ import org.bukkit.Server;
 import java.lang.reflect.Field;
 import java.util.Objects;
 
-import static kuwg.packetapi.util.ChannelGetter.getServerVersion;
-
 public class PluginReflectionHandler {
     private Object serverConnection;
     private Object minecraftServer;
@@ -15,16 +13,14 @@ public class PluginReflectionHandler {
     public PluginReflectionHandler() {
         try {
             Server server = Bukkit.getServer();
-            this.craftServer = Objects.requireNonNull(ReflectionUtil.classForName("org.bukkit.craftbukkit." + getServerVersion() + "CraftServer")).cast(server);
+            this.craftServer = Objects.requireNonNull(ReflectionUtil.classForName("org.bukkit.craftbukkit." + ReflectionUtil.v + "CraftServer")).cast(server);
             this.minecraftServer = ReflectionUtil.invokeMethod(craftServer, "getServer");
             assert minecraftServer != null;
             for (Field f : minecraftServer.getClass().getDeclaredFields()) {
                 if (f.getType().getSimpleName().contains("ServerConnection"))
                     serverConnection = f.get(minecraftServer);
             }
-        }catch (Exception e){
-            e.printStackTrace();
-        }
+        }catch (Exception ignored){}
     }
 
     public Object getCraftServer() {

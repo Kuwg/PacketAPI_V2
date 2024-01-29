@@ -3,23 +3,10 @@ package kuwg.packetapi.packets.play.in;
 import io.netty.buffer.ByteBuf;
 import kuwg.packetapi.PacketAPI;
 import kuwg.packetapi.events.PacketReceiveEvent;
-import kuwg.packetapi.mojang.PlayerTeleportFlag;
 import kuwg.packetapi.packets.EnumPacketDirection;
 import kuwg.packetapi.packets.PacketWrapper;
-import kuwg.packetapi.util.ByteBufUtil;
-import kuwg.packetapi.util.ReflectionUtil;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
-
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
-
-import static kuwg.packetapi.util.ChannelGetter.getServerVersion;
 
 @SuppressWarnings("unused")
 public class WrappedPlayInFlying extends PacketWrapper<WrappedPlayInFlying> {

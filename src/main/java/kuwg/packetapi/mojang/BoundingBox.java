@@ -8,8 +8,6 @@ import org.bukkit.util.Vector;
 
 import java.util.Objects;
 
-import static kuwg.packetapi.util.ChannelGetter.getServerVersion;
-
 public class BoundingBox {
     public double minX;
     public double minY;
@@ -29,7 +27,7 @@ public class BoundingBox {
     }
     @SuppressWarnings("ConstantConditions")
     public BoundingBox(Entity entity){
-        Object craftEntity= Objects.requireNonNull(ReflectionUtil.classForName("org.bukkit.craftbukkit." + getServerVersion() + ".entity.CraftEntity")).cast(entity);
+        Object craftEntity= Objects.requireNonNull(ReflectionUtil.classForName("org.bukkit.craftbukkit." + ReflectionUtil.v + ".entity.CraftEntity")).cast(entity);
         Object objectEntity=ReflectionUtil.getInvokeResult(ReflectionUtil.getMethod(craftEntity.getClass(), "getHandle"), craftEntity);
         assert objectEntity != null;
         Object AxisAlignedBB = ReflectionUtil.getInvokeResult(ReflectionUtil.getMethod(objectEntity.getClass(), "getBoundingBox"), objectEntity);
@@ -49,7 +47,7 @@ public class BoundingBox {
 
     @SuppressWarnings("ConstantConditions")
     public BoundingBox(Player player){
-        Object craftEntity=Objects.requireNonNull(ReflectionUtil.classForName("org.bukkit.craftbukkit." + getServerVersion() + ".entity.CraftEntity")).cast(player);
+        Object craftEntity=Objects.requireNonNull(ReflectionUtil.classForName("org.bukkit.craftbukkit." + ReflectionUtil.v + ".entity.CraftEntity")).cast(player);
         Object objectEntity=ReflectionUtil.getInvokeResult(ReflectionUtil.getMethod(craftEntity.getClass(), "getHandle"), craftEntity);
         assert objectEntity != null;
         Object AxisAlignedBB = ReflectionUtil.getInvokeResult(ReflectionUtil.getMethod(objectEntity.getClass(), "getBoundingBox"), objectEntity);

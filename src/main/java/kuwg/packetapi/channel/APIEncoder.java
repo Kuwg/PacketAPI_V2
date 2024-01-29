@@ -5,6 +5,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToMessageEncoder;
 import kuwg.packetapi.PacketAPI;
 import kuwg.packetapi.events.PacketSendEvent;
+import kuwg.packetapi.exceptions.PacketException;
 import kuwg.packetapi.exceptions.PacketProcessException;
 import kuwg.packetapi.player.PacketPlayer;
 
@@ -24,8 +25,8 @@ public class APIEncoder extends MessageToMessageEncoder<ByteBuf> {
             list.add(byteBuf.retain());
         }
     }
-    private void transform(ByteBuf buf) throws PacketProcessException {
-        int preProcessIndex = buf.readerIndex();
+    private void transform(ByteBuf buf) throws PacketException {
+        final int preProcessIndex = buf.readerIndex();
         PacketSendEvent event = new PacketSendEvent(buf, player.getPlayer());
         PacketAPI.getInstance().getPacketListenerManager().call(event);
         buf.readerIndex(preProcessIndex);

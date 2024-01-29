@@ -6,10 +6,12 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Arrays;
 
 public class ReflectionUtil {
 
-    @Nullable
+    public static final String v = org.bukkit.Bukkit.getServer().getClass().getPackage().getName().substring(23);
+
     public static Field[] getFields(Class<?> clazz){
         return clazz.getFields();
     }
@@ -34,7 +36,6 @@ public class ReflectionUtil {
         }
     }
 
-    @Nullable
     public static Method[] getMethods(Class<?> clazz){
         return clazz.getMethods();
     }
@@ -80,10 +81,7 @@ public class ReflectionUtil {
     @Nullable
     public static Object startClassConst(Class<?> classToInit, Object... params) {
         try {
-            Class<?>[] paramTypes = new Class<?>[params.length];
-            for (int i = 0; i < params.length; i++) {
-                paramTypes[i] = params[i].getClass();
-            }
+            final Class<?>[] paramTypes = Arrays.stream(params).map(Object::getClass).toArray(Class<?>[]::new);
             Constructor<?> constructor = classToInit.getConstructor(paramTypes);
             return constructor.newInstance(params);
         } catch (NoSuchMethodException | IllegalAccessException | InstantiationException | InvocationTargetException ignored) {
@@ -101,7 +99,6 @@ public class ReflectionUtil {
             method.setAccessible(true);
             return method.invoke(target, params);
         } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
-            e.printStackTrace();
             return null;
         }
     }
@@ -163,10 +160,11 @@ public class ReflectionUtil {
 
 
 
+
+
+
+
     private ReflectionUtil(){
         throw new UnsupportedOperationException("You cannot instantiate this class.");
     }
-
-
-
 }

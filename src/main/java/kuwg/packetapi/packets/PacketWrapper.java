@@ -2,6 +2,7 @@ package kuwg.packetapi.packets;
 
 import io.netty.buffer.ByteBuf;
 import kuwg.packetapi.PacketAPI;
+import kuwg.packetapi.events.PacketEvent;
 import kuwg.packetapi.player.PacketPlayer;
 import kuwg.packetapi.util.ByteBufUtil;
 import kuwg.packetapi.util.PAPIVer;
@@ -23,6 +24,10 @@ public abstract class PacketWrapper<T> {
         this.buffer = buffer;
         this.sender = sender;
         this.direction = direction;
+    }
+
+    public PacketWrapper(PacketEvent event){
+        this(event.getByteBuf(), event.getPlayer(), event.getEnumPacketDirection());
     }
 
     public void write(){}
@@ -161,8 +166,7 @@ public abstract class PacketWrapper<T> {
         }
     }
     protected void prepareForWrite(final int id){
-        this.buffer.clear();
-        ByteBufUtil.writeVarInt(this.buffer, id);
+        ByteBufUtil.writeVarInt(this.buffer.clear(), id);
     }
     protected PacketPlayer getPacketPlayer(){
         return PacketAPI.getInstance().getPacketPlayer(getPlayer());
@@ -474,6 +478,8 @@ public abstract class PacketWrapper<T> {
     }
 
     @FunctionalInterface
-    public interface Writer<T> extends BiConsumer<PacketWrapper<?>, T> {
-    }
+    public interface Writer<T> extends BiConsumer<PacketWrapper<?>, T>{}
+
+
+
 }

@@ -1,4 +1,4 @@
-package kuwg.packetapi.listener;
+package kuwg.packetapi.listener.priority;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -7,6 +7,6 @@ import java.lang.annotation.Target;
 
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface PacketPriority {
-    public EnumPacketListenerPriority priority();
+public @interface PacketListenerPriority {
+    EnumPacketListenerPriority priority();
 }

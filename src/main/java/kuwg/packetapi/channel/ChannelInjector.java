@@ -13,6 +13,7 @@ public class ChannelInjector {
         }catch (Exception ignored){}
     }
     public static void remove(final PacketPlayer player){
+        assert player!=null;
         final Channel channel = player.getChannel();
         try {
             channel.pipeline().remove("papi_handler");
