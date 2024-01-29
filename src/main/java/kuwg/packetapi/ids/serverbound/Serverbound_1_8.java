@@ -1,6 +1,6 @@
 package kuwg.packetapi.ids.serverbound;
 
-public enum ServerboundPacketType_1_7_10 {
+public enum Serverbound_1_8 {
     KEEP_ALIVE,
     CHAT_MESSAGE,
     USE_ENTITY,
@@ -24,5 +24,7 @@ public enum ServerboundPacketType_1_7_10 {
     TAB_COMPLETE,
     CLIENT_SETTINGS,
     CLIENT_STATUS,
-    PLUGIN_MESSAGE
+    PLUGIN_MESSAGE,
+    SPECTATE,
+    RESOURCE_PACK_STATUS
 }

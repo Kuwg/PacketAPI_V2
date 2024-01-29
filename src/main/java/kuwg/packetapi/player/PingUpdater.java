@@ -14,9 +14,9 @@ public class PingUpdater {
 
     /**
      * Every how many ms the ping of every player needs to be updated.
-     * Be aware that reducing this can cause lag even tho that's fully async.
+     * Be aware that reducing this can cause the thread to crash if there are too many players online.
      */
-    public static long ms = 1500;
+    public static long ms = 2000;
     public static void start() {
 
         mTimer = new Timer();

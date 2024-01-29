@@ -8,13 +8,13 @@ import org.bukkit.util.Vector;
 import java.util.Collection;
 import java.util.concurrent.ThreadLocalRandom;
 
-@SuppressWarnings({"unused", "unchecked", "ManualMinMaxCalculation"})
+@SuppressWarnings({"unused", "ManualMinMaxCalculation"})
 public class MathUtil{
     public static double calculateAngleDifference(final double angle1, final double angle2) {
         return Math.abs(angle1 % 360.0 - angle2 % 360.0);
     }
     public static double getAverage(final Collection<? extends Number> data) {
-        return (data!=null&&!data.isEmpty())?sum(data)/data.size():0.0;
+        return (data!=null&&!data.isEmpty())?data.stream().mapToDouble(Number::doubleValue).sum()/data.size():0.0;
     }
     public static double sum(final Collection<? extends Number> data){
         return data == null || data.isEmpty() ? 0.0 : data.stream().mapToDouble(Number::doubleValue).sum();
@@ -68,9 +68,6 @@ public class MathUtil{
     }
     public static int ceil(double num){
         return (int) Math.ceil(num);
-    }
-    public double hyp(double x, double y){
-        return Math.sqrt(x*x+y+y);
     }
 
     /**

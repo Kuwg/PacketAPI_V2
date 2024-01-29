@@ -25,6 +25,7 @@ public class BoundingBox {
         this.maxY = Math.max(y1, y2);
         this.maxZ = Math.max(z1, z2);
     }
+
     @SuppressWarnings("ConstantConditions")
     public BoundingBox(Entity entity){
         Object craftEntity= Objects.requireNonNull(ReflectionUtil.classForName("org.bukkit.craftbukkit." + ReflectionUtil.v + ".entity.CraftEntity")).cast(entity);
