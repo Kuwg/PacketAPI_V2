@@ -41,6 +41,7 @@ public class PacketPlayer {
     private final Object playerConnection;
     private final Object networkManager;
     private final long joinTime;
+    private boolean injected;
     /**
      * The server version, as V1_x_x_<sub> ^</sub>
      */
@@ -523,5 +524,20 @@ public class PacketPlayer {
     @SuppressWarnings("DataFlowIssue")
     public int reflectionPing(){
         return ReflectionUtil.getTField(entityPlayer, "ping");
+    }
+
+    /**
+     * Do not touch this unless you know what you are doing!
+     */
+    public void setInjected(final boolean inject){
+        this.injected=inject;
+    }
+
+    /**
+     * Checks if a player is injected or not.
+     * @return whether the player's channel has been injected or not.
+     */
+    public boolean isInjected() {
+        return injected;
     }
 }
