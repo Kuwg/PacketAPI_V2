@@ -1,0 +1,3 @@
+Implement Packet Types handing (not existing for now) -> get the right packet type based on id and server version.
+Implement adding packets before PlayerJoinEvent
+Adding a NetworkManager channel getter
