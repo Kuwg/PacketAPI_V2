@@ -63,12 +63,12 @@ public class PacketDataSerializer extends ByteBuf {
 
     @Override
     public boolean isReadOnly() {
-        return false;
+        return this.byteBuf.isReadOnly();
     }
 
     @Override
     public ByteBuf asReadOnly() {
-        return null;
+        return this.byteBuf.asReadOnly();
     }
 
     @Override

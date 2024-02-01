@@ -20,7 +20,7 @@ public class ChannelInitializer extends ChannelInboundHandlerAdapter {
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
 
         if(!injected)
-            AsyncUtil.getExecutor().execute(()->{
+            AsyncUtil.executorAsync(()->{
                 Channel channel = ctx.channel();
                 if (PacketAPI.getVer().isNewerThan(new PAPIVer("1.12"))) {
                     try {

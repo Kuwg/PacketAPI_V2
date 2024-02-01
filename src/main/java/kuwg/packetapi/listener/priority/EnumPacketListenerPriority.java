@@ -6,7 +6,9 @@ public enum EnumPacketListenerPriority {
     EnumPacketListenerPriority(int value){
         this.value=value;
     }
-    public int value(){return value;}
+
+    @SuppressWarnings("unused")
+    public int getValue(){return value;}
     public static EnumPacketListenerPriority of(int i){
         return values()[i];
     }

@@ -4,16 +4,13 @@ import io.netty.buffer.ByteBuf;
 import kuwg.packetapi.PacketAPI;
 import kuwg.packetapi.exceptions.PacketBufferException;
 import kuwg.packetapi.exceptions.PacketException;
-import kuwg.packetapi.exceptions.PacketProcessException;
 import kuwg.packetapi.packets.EnumPacketDirection;
 import kuwg.packetapi.player.PacketPlayer;
 import kuwg.packetapi.util.ByteBufUtil;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.Objects;
-
+@SuppressWarnings("unused")
 public abstract class PacketEvent implements Cancellable {
     private final Player player;
     private final long timestamp;
@@ -26,15 +23,14 @@ public abstract class PacketEvent implements Cancellable {
         try {
             this.byteBuf = buffer;
             this.size = byteBuf.readableBytes();
-            if (size == 0)
-                throw new PacketBufferException("Size of packet is 0.");
-            timestamp = System.currentTimeMillis();
+            assert size != 0 : "Size of packet is 0.";
+            this.timestamp = System.currentTimeMillis();
             this.player = player;
             this.direction = direction;
             this.packetPlayer = PacketAPI.getInstance().getPacketPlayer(player);
             this.packetID = ByteBufUtil.readVarInt(byteBuf);
-        }catch (Exception ex){
-            throw new PacketBufferException(ex.getMessage());
+        }catch (final Throwable t){
+            throw new PacketBufferException(t.getMessage());
         }
     }
 

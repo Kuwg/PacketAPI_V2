@@ -1,5 +1,6 @@
 package kuwg.packetapi.mojang;
 
+@SuppressWarnings("unused")
 public class Vec3D {
     public final double x;
     public final double y;
@@ -68,8 +69,16 @@ public class Vec3D {
         }
     }
 
+    //public String toString() {return "(" + x + ", " + y + ", " + z + ")";}
+
+
+    @Override
     public String toString() {
-        return "(" + x + ", " + y + ", " + z + ")";
+        return "Vec3D{" +
+                "x=" + x +
+                ", y=" + y +
+                ", z=" + z +
+                '}';
     }
 
     public Vec3D rotateX(float angle) {
@@ -81,7 +90,7 @@ public class Vec3D {
     }
 
     public Vec3D rotateY(float angle) {
-        return new Vec3D(this.x * (double) Math.cos(angle) + this.z * (double) Math.sin(angle), this.y,
-                this.z * (double) Math.cos(angle) - this.x * (double) Math.sin(angle));
+        return new Vec3D(this.x * Math.cos(angle) + this.z * Math.sin(angle), this.y,
+                this.z * Math.cos(angle) - this.x * Math.sin(angle));
     }
 }

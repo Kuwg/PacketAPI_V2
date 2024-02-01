@@ -2,6 +2,7 @@ package kuwg.packetapi.util;
 
 import java.util.Arrays;
 
+@SuppressWarnings("unused")
 public class PAPIVer {
     private final int[] versionIntArray;
     public PAPIVer(final int... version) {
@@ -99,7 +100,7 @@ public class PAPIVer {
      */
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder(versionIntArray.length * 2 - 1).append(versionIntArray[0]);
+        final StringBuilder sb = new StringBuilder(versionIntArray.length * 2 - 1).append(versionIntArray[0]);
         for (int i = 1; i < versionIntArray.length; i++) {
             sb.append(".").append(versionIntArray[i]);
         }

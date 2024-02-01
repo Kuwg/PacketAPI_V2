@@ -13,7 +13,7 @@ import kuwg.packetapi.packets.play.in.WrappedPlayInKeepAlive;
 import java.util.*;
 
 @SuppressWarnings("unused")
-public class PacketListenerManager {
+public final class PacketListenerManager {
     private final Map<EnumPacketListenerPriority, Set<PacketListener>> listeners = new HashMap<>();
 
     public void registerListener(PacketListener listener) {
@@ -43,6 +43,8 @@ public class PacketListenerManager {
                     for (final PacketListener listener :
                             listeners.getOrDefault(EnumPacketListenerPriority.of(i), Collections.emptySet())) {
                         listener.onPacket(raw);
+                        if(event.getPacketID()==0x00)
+                            event.getPacketPlayer().onKeepAlive(new WrappedPlayInKeepAlive(event));
                         listener.onPacketReceive(event);
                     }
                 }

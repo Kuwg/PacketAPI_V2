@@ -17,6 +17,8 @@ public class ChannelInjector {
         final Channel channel = player.getChannel();
         try {
             channel.pipeline().remove("papi_handler");
+            channel.pipeline().remove("papi_encoder");
+            channel.pipeline().remove("papi_decoder");
         }catch (Exception ignored){}
     }
 }
