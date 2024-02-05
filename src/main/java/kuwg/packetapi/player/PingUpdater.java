@@ -16,7 +16,7 @@ public class PingUpdater {
      * Every how many ms the ping of every player needs to be updated.
      * Be aware that reducing this can cause the thread to crash if there are too many players online.
      */
-    public static long ms = 2000;
+    public static long task_repeat_time = 2000;
     public static void start() {
 
         mTimer = new Timer();
@@ -31,7 +31,7 @@ public class PingUpdater {
                 });
             }
         };
-        mTimer.schedule(mTimerTask, 0, ms);
+        mTimer.schedule(mTimerTask, 0, task_repeat_time);
     }
     public synchronized static void stop() {
         if (mTimerTask != null) {

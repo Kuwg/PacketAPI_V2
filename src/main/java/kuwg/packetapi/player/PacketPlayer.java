@@ -17,7 +17,6 @@ import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.block.Block;
-import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.potion.PotionEffect;
@@ -33,7 +32,7 @@ import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
 @SuppressWarnings({"unused", "JavaReflectionInvocation", "unchecked", "rawtypes", "CallToPrintStackTrace"})
-public class PacketPlayer {
+public final class PacketPlayer {
     private final Player player;
     private final Channel channel;
     private final Object craftPlayer;
@@ -171,16 +170,20 @@ public class PacketPlayer {
             return false;
         }
     }
-    @SuppressWarnings("ConstantConditions")
+
     public BoundingBox getBoundingBox(){
-        Object AxisAlignedBB = ReflectionUtil.getInvokeResult(ReflectionUtil.getMethod(entityPlayer.getClass(), "getBoundingBox"), entityPlayer);
-        double a= ReflectionUtil.getTField(AxisAlignedBB, "a");
-        double b= ReflectionUtil.getTField(AxisAlignedBB, "b");
-        double c= ReflectionUtil.getTField(AxisAlignedBB, "c");
-        double d= ReflectionUtil.getTField(AxisAlignedBB, "d");
-        double e= ReflectionUtil.getTField(AxisAlignedBB, "e");
-        double f= ReflectionUtil.getTField(AxisAlignedBB, "f");
-        return new BoundingBox(a,b,c,d,e,f);
+        Object AxisAlignedBB = ReflectionUtil.getInvokeResult(
+                ReflectionUtil.getMethod(entityPlayer.getClass(), "getBoundingBox"),
+                entityPlayer
+        );
+        return new BoundingBox(
+                ReflectionUtil.getDoubleField(AxisAlignedBB, "a"),
+                ReflectionUtil.getDoubleField(AxisAlignedBB, "b"),
+                ReflectionUtil.getDoubleField(AxisAlignedBB, "c"),
+                ReflectionUtil.getDoubleField(AxisAlignedBB, "d"),
+                ReflectionUtil.getDoubleField(AxisAlignedBB, "e"),
+                ReflectionUtil.getDoubleField(AxisAlignedBB, "f")
+        );
     }
     public void setBoundingBox(BoundingBox bb){
         Object AxisAlignedBB = ReflectionUtil.getInvokeResult(ReflectionUtil.getMethod(entityPlayer.getClass(), "getBoundingBox"), entityPlayer);
@@ -204,17 +207,11 @@ public class PacketPlayer {
                         ReflectionUtil.classForName("net.minecraft.server." + getServerVersion() + ".Packet")),
                 getPlayerConnection(), packet);
     }
-    /*
-    public void sendPacket(PacketWrapper packet){
-        if(packet.getDirection().equals(PacketDirection.SEND)){
-            sendPacket(packet.getRawPacket());
-        }else throw new UnsupportedOperationException("You cannot send a receiving packet!");
-    }
-    fix!
-     */
+
     public void sendPacket(ByteBuf byteBuf){
         channel.writeAndFlush(byteBuf);
     }
+
     public void setSkin(Player onlinePlayer) {
         try {
             Class<?> craftPlayerClass = Class.forName("org.bukkit.craftbukkit." + getServerVersion() + ".entity.CraftPlayer");
@@ -231,10 +228,10 @@ public class PacketPlayer {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        for (Player on : Bukkit.getOnlinePlayers()) {
+        Bukkit.getOnlinePlayers().forEach(on -> {
             on.hidePlayer(player);
             on.showPlayer(player);
-        }
+        });
     }
     public void crash(){
         try {
@@ -243,12 +240,16 @@ public class PacketPlayer {
                     Class.forName("net.minecraft.server." + getServerVersion() + ".PacketPlayOutExplosion")
                             .getConstructor(double.class, double.class, double.class, float.class, List.class, Vec3D)
                             .newInstance(
-                                    d(),
-                                    d(),
-                                    d(),
-                                    f(),
+                                    CRASH_DOUBLE,
+                                    CRASH_DOUBLE,
+                                    CRASH_DOUBLE,
+                                    CRASH_FLOAT,
                                     Collections.emptyList(),
-                                    Vec3D.getConstructor(double.class, double.class, double.class).newInstance(d(), d(), d())
+                                    Vec3D.getConstructor(
+                                            double.class,
+                                            double.class,
+                                            double.class
+                                    ).newInstance(CRASH_DOUBLE_2, CRASH_DOUBLE_2, CRASH_DOUBLE_2)
                             )
             );
 
@@ -256,13 +257,9 @@ public class PacketPlayer {
             ex.printStackTrace(System.out);
         }
     }
-    private static Double d() {
-        return Double.MAX_VALUE-432.432;
-    }
-
-    private static Float f() {
-        return Float.MAX_VALUE-32;
-    }
+    private static final double CRASH_DOUBLE = Double.MAX_VALUE-25442.2234;
+    private static final double CRASH_DOUBLE_2 = Double.MAX_VALUE-235442.2234;
+    private static final double CRASH_FLOAT = Float.MAX_VALUE-38943.4312;
 
     public Channel getChannel() {
         return channel;
@@ -392,11 +389,6 @@ public class PacketPlayer {
         }
     }
 
-    @Deprecated
-    public void attack(Entity victim){
-        //FIXME: player.attack(victim);
-    }
-
     public void sendMessage(String message, kuwg.packetapi.mojang.ChatMessageType type) {
         try {
             message="{\"text\": \"" + message + "\"}";
@@ -450,9 +442,11 @@ public class PacketPlayer {
         Bukkit.getScheduler().runTask(PacketAPI.getInstance(),()->player.teleport(new Location(player.getWorld(), player.getLocation().getX(), player.getLocation().getY(), player.getLocation().getZ(), (float) (ThreadLocalRandom.current().nextDouble(360.0) - 180.0f), (float) (ThreadLocalRandom.current().nextDouble(180.0) - 90.0f)), PlayerTeleportEvent.TeleportCause.UNKNOWN));
     }
     public void teleport(Location location){
-        internalTeleport(location.getX(), location.getY(), location.getZ(), location.getYaw(), location.getPitch());
-    }
-    private void internalTeleport(double d0, double d1, double d2, float f, float f1) {
+        double d0 = location.getX();
+        double d1 = location.getY();
+        double d2 = location.getZ();
+        float f = location.getYaw();
+        float f1 = location.getPitch();
         if (Float.isNaN(f))
             f = 0.0F;
         if (Float.isNaN(f1))
@@ -463,7 +457,7 @@ public class PacketPlayer {
                             .getConstructor(
                                     double.class, double.class, double.class, float.class, float.class, Set.class)
                             .newInstance(d0, d1, d2, f, f1, teleportFlags));
-        } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException | InstantiationException | InvocationTargetException ignored) {}
+        } catch (Exception ignore){}
     }
 
     @SuppressWarnings("ConstantConditions")
@@ -509,6 +503,8 @@ public class PacketPlayer {
 
     /**
      * Be aware that this updates every 1.5 seconds.
+     * You can change this by changing "PingUpdater.task_repeat_time" field.
+     * This is way more precise than PacketPlayer#getPing().
      * @return The delay between send-receive keep alive packets.
      */
     public int getKeepAlivePing(){

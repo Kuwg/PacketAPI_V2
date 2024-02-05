@@ -12,7 +12,7 @@ import kuwg.packetapi.packets.play.in.WrappedPlayInKeepAlive;
 
 import java.util.*;
 
-@SuppressWarnings("unused")
+@SuppressWarnings({"unused", "ForLoopReplaceableByForEach"})
 public final class PacketListenerManager {
     private final Map<EnumPacketListenerPriority, Set<PacketListener>> listeners = new HashMap<>();
 
@@ -40,10 +40,11 @@ public final class PacketListenerManager {
                 if(event.getPacketID()==0x00)
                     event.getPacketPlayer().onKeepAlive(new WrappedPlayInKeepAlive(event));
                 for (int i = 0; i <= 6; i += 2) {
-                    for (final PacketListener listener :
-                            listeners.getOrDefault(EnumPacketListenerPriority.of(i), Collections.emptySet())) {
+                    for (Iterator<PacketListener> iterator = listeners.getOrDefault(EnumPacketListenerPriority.of(i),
+                            Collections.emptySet()).iterator(); iterator.hasNext(); ) {
+                        PacketListener listener = iterator.next();
                         listener.onPacket(raw);
-                        if(event.getPacketID()==0x00)
+                        if (event.getPacketID() == 0x00)
                             event.getPacketPlayer().onKeepAlive(new WrappedPlayInKeepAlive(event));
                         listener.onPacketReceive(event);
                     }
@@ -51,8 +52,9 @@ public final class PacketListenerManager {
             }else {
                 final PacketSendEvent event = (PacketSendEvent) raw;
                 for (int i = 0; i <= 6; i += 2) {
-                    for (final PacketListener listener :
-                            listeners.getOrDefault(EnumPacketListenerPriority.of(i), Collections.emptySet())) {
+                    for (Iterator<PacketListener> iterator = listeners.getOrDefault(EnumPacketListenerPriority.of(i),
+                            Collections.emptySet()).iterator(); iterator.hasNext(); ) {
+                        PacketListener listener = iterator.next();
                         listener.onPacket(raw);
                         listener.onPacketSend(event);
                     }

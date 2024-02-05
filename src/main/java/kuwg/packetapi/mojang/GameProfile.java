@@ -9,7 +9,6 @@ public class GameProfile {
     private final UUID id;
     private final String name;
     private final PropertyMap properties = new PropertyMap();
-    private boolean legacy;
 
     public GameProfile(UUID var1, String var2) {
         if (var1 == null && StringUtils.isBlank(var2)) {
@@ -64,10 +63,6 @@ public class GameProfile {
     }
 
     public String toString() {
-        return (new ToStringBuilder(this)).append("id", this.id).append("name", this.name).append("properties", this.properties).append("legacy", this.legacy).toString();
-    }
-
-    public boolean isLegacy() {
-        return this.legacy;
+        return (new ToStringBuilder(this)).append("id", this.id).append("name", this.name).append("properties", this.properties).toString();
     }
 }

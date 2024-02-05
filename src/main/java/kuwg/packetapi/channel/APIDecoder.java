@@ -8,7 +8,6 @@ import kuwg.packetapi.PacketAPI;
 import kuwg.packetapi.events.PacketReceiveEvent;
 import kuwg.packetapi.exceptions.PacketBufferException;
 import kuwg.packetapi.exceptions.PacketException;
-import kuwg.packetapi.exceptions.PacketProcessException;
 import kuwg.packetapi.player.PacketPlayer;
 
 import java.util.List;
@@ -40,6 +39,5 @@ public class APIDecoder extends MessageToMessageDecoder<ByteBuf> {
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
         if(cause instanceof PacketBufferException)
             cause.printStackTrace(System.out);
-
     }
 }

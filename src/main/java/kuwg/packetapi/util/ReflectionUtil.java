@@ -117,7 +117,7 @@ public class ReflectionUtil {
     }
 
     @SuppressWarnings("unchecked")
-    public static  <T> T getTField(Object location, String fieldName){
+    public static <T> T getTField(Object location, String fieldName){
         final Field field = getField(location.getClass(), fieldName);
         if(field==null)return null;
         final Object result = getFieldInvocationResult(field, location);
@@ -128,6 +128,10 @@ public class ReflectionUtil {
         }
     }
 
+    @SuppressWarnings("ConstantConditions")
+    public static double getDoubleField(Object location, String fieldName){
+        return getTField(location, fieldName);
+    }
     public static void setField(Object location, String fieldName, Object content){
         Field field = getField(location.getClass(), fieldName);
         if(field==null)return;
